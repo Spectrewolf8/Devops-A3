@@ -56,9 +56,11 @@ pipeline {
                         bat "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest"
                         echo "✓ Docker image built: ${DOCKER_IMAGE}:${DOCKER_TAG}"
                         
-                        // Stop and remove existing container
-                        bat "docker stop user-management-app 2>nul || echo No container to stop"
-                        bat "docker rm user-management-app 2>nul || echo No container to remove"
+                        // Stop and remove existing container (Windows syntax)
+                        bat """
+                            docker stop user-management-app >nul 2>&1 || echo Container not running
+                            docker rm user-management-app >nul 2>&1 || echo No container to remove
+                        """
                         
                         // Run new container
                         bat "docker run -d --name user-management-app -p ${APP_PORT}:5000 ${DOCKER_IMAGE}:${DOCKER_TAG}"
@@ -70,6 +72,7 @@ pipeline {
                         
                         // Health check
                         bat "docker ps | findstr user-management-app"
+                        echo "✓ Container is running successfully"
                         
                     } catch (Exception e) {
                         echo "❌ Deployment failed: ${e.getMessage()}"
@@ -113,10 +116,12 @@ pipeline {
         always {
             echo 'Pipeline execution completed. Cleaning up...'
             script {
-                // Stop and remove the application container
+                // Stop and remove the application container (Windows syntax)
                 try {
-                    bat 'docker stop user-management-app 2>nul || echo No container to stop'
-                    bat 'docker rm user-management-app 2>nul || echo No container to remove'
+                    bat """
+                        docker stop user-management-app >nul 2>&1 || echo Container not running
+                        docker rm user-management-app >nul 2>&1 || echo No container to remove
+                    """
                 } catch (Exception e) {
                     echo "Cleanup warning: ${e.getMessage()}"
                 }
