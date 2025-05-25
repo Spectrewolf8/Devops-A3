@@ -60,9 +60,9 @@ pipeline {
                 echo 'Running Selenium tests against deployed application...'
                 script {
                     try {
-                        // Run Selenium tests in container
+                        // Run Selenium tests in container with Chrome installed
                         bat """
-                            docker run --rm -v "%cd%":/workspace -w /workspace --add-host host.docker.internal:host-gateway ${PYTHON_IMAGE} sh -c "pip install -r requirements.txt && APP_URL=http://host.docker.internal:${APP_PORT} python test_selenium.py"
+                            docker run --rm -v "%cd%":/workspace -w /workspace --add-host host.docker.internal:host-gateway ${DOCKER_IMAGE}:${DOCKER_TAG} sh -c "APP_URL=http://host.docker.internal:${APP_PORT} python test_selenium.py"
                         """
                         echo '✓ Selenium tests completed successfully'
                         
@@ -71,7 +71,7 @@ pipeline {
                         
                         // Get application logs for debugging
                         try {
-                            bat 'docker logs user-management-app'
+                            bat "docker logs user-management-app-${BUILD_NUMBER}"
                         } catch (Exception logError) {
                             echo "Could not get container logs: ${logError.getMessage()}"
                         }
@@ -91,8 +91,8 @@ pipeline {
                 // Stop and remove the application container (Windows syntax)
                 try {
                     bat """
-                        docker stop user-management-app >nul 2>&1 || echo Container not running
-                        docker rm user-management-app >nul 2>&1 || echo No container to remove
+                        docker stop user-management-app-${BUILD_NUMBER} >nul 2>&1 || echo Container not running
+                        docker rm user-management-app-${BUILD_NUMBER} >nul 2>&1 || echo No container to remove
                     """
                 } catch (Exception e) {
                     echo "Cleanup warning: ${e.getMessage()}"
