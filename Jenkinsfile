@@ -7,7 +7,8 @@ pipeline {
         APP_PORT = '5000'
         GITHUB_REPO = 'your-github-username/user-management-app'
     }
-      stages {
+    
+    stages {
         stage('Code Linting') {
             steps {
                 echo 'Running code linting with flake8...'
@@ -60,7 +61,9 @@ pipeline {
                     }
                 }
             }
-        }        stage('Containerized Deployment') {
+        }
+        
+        stage('Containerized Deployment') {
             steps {
                 echo 'Building Docker image and deploying application...'
                 script {
@@ -78,13 +81,13 @@ pipeline {
                         
                         // Run new container
                         bat """
-                            docker run -d \\
-                                --name user-management-app \\
-                                -p ${APP_PORT}:5000 \\
-                                --health-cmd="curl -f http://localhost:5000/health || exit 1" \\
-                                --health-interval=30s \\
-                                --health-timeout=10s \\
-                                --health-retries=3 \\
+                            docker run -d ^
+                                --name user-management-app ^
+                                -p ${APP_PORT}:5000 ^
+                                --health-cmd="curl -f http://localhost:5000/health || exit 1" ^
+                                --health-interval=30s ^
+                                --health-timeout=10s ^
+                                --health-retries=3 ^
                                 ${DOCKER_IMAGE}:${DOCKER_TAG}
                         """
                         
@@ -202,13 +205,4 @@ pipeline {
                 echo "🔧 Common issues:"
                 echo "  - Check if all dependencies are installed"
                 echo "  - Verify Docker is running"
-                echo "  - Check application health endpoint"
-                echo "  - Review test failures"
-            }
-        }
-        
-        unstable {
-            echo '⚠ Pipeline completed with warnings'
-        }
-    }
-}
+                echo "  - Check application health
