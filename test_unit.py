@@ -2,7 +2,8 @@ import unittest
 import tempfile
 import os
 import json
-from app import app, init_db, DATABASE
+import sqlite3
+from app import app, init_db
 
 
 class TestUserManagementApp(unittest.TestCase):
@@ -11,23 +12,32 @@ class TestUserManagementApp(unittest.TestCase):
     def setUp(self):
         """Set up test client and temporary database"""
         # Create a temporary database file
-        self.db_fd, app.config["DATABASE"] = tempfile.mkstemp()
+        self.db_fd, self.db_path = tempfile.mkstemp()
+        app.config["DATABASE"] = self.db_path
         app.config["TESTING"] = True
         app.config["WTF_CSRF_ENABLED"] = False
-
-        # Override the DATABASE constant for testing
-        global DATABASE
-        DATABASE = app.config["DATABASE"]
 
         self.app = app.test_client()
 
         with app.app_context():
+            # Close any existing connections
+            try:
+                conn = sqlite3.connect(self.db_path)
+                conn.execute("DROP TABLE IF EXISTS users")
+                conn.commit()
+                conn.close()
+            except:
+                pass
+            
             init_db()
 
     def tearDown(self):
         """Clean up after each test"""
-        os.close(self.db_fd)
-        os.unlink(app.config["DATABASE"])
+        try:
+            os.close(self.db_fd)
+            os.unlink(self.db_path)
+        except:
+            pass
 
     def test_home_page(self):
         """Test that home page loads correctly"""
@@ -74,17 +84,29 @@ class TestUserManagementApp(unittest.TestCase):
     def test_delete_user(self):
         """Test user deletion"""
         # First add a user
-        response = self.app.post("/add_user", data={"name": "Delete Me", "email": "delete@example.com"}, follow_redirects=True)
+        self.app.post("/add_user", data={"name": "Delete Me", "email": "delete@example.com"})
 
-        # Extract user ID from the response (this is a simple approach)
-        # In a real app, you might want to query the database directly
-        self.assertIn(b"Delete Me", response.data)
+        # Get the user ID from database
+        conn = sqlite3.connect(app.config["DATABASE"])
+        cursor = conn.execute("SELECT id FROM users WHERE email = ?", ("delete@example.com",))
+        user_row = cursor.fetchone()
+        conn.close()
+        
+        self.assertIsNotNone(user_row, "User was not created")
+        user_id = user_row[0]
 
-        # For testing purposes, we'll assume the user ID is 1 (first user)
-        response = self.app.get("/delete_user/1", follow_redirects=True)
+        # Delete the user
+        response = self.app.get(f"/delete_user/{user_id}", follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"User deleted successfully!", response.data)
-        self.assertNotIn(b"Delete Me", response.data)
+        
+        # Verify user is deleted from database
+        conn = sqlite3.connect(app.config["DATABASE"])
+        cursor = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,))
+        deleted_user = cursor.fetchone()
+        conn.close()
+        
+        self.assertIsNone(deleted_user, "User was not deleted from database")
 
     def test_health_check(self):
         """Test health check endpoint"""

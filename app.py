@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
-import os
 from datetime import datetime
 
 app = Flask(__name__)
@@ -12,7 +11,7 @@ DATABASE = "users.db"
 
 def init_db():
     """Initialize the database with users table"""
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect(app.config.get("DATABASE", DATABASE))
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -30,7 +29,8 @@ def init_db():
 
 def get_db_connection():
     """Get database connection"""
-    conn = sqlite3.connect(DATABASE)
+    db_path = app.config.get("DATABASE", DATABASE)
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
