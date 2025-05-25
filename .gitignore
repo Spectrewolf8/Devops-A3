@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+users.db
+
+# Logs
+*.log
+logs/
+app-logs.txt
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+test-results/
+screenshots/
+*.xml
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Application specific
+data/
+instance/
+.webassets-cache
+
+# Selenium
+geckodriver.log
+chromedriver.log
+selenium-debug.log

@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  selenium-test:
+    build: .
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      - APP_URL=http://web:5000
+      - PYTHONUNBUFFERED=1
+    command: python test_selenium.py
+    volumes:
+      - ./test-results:/app/test-results
