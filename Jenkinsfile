@@ -84,17 +84,17 @@ pipeline {
         
         stage('Selenium Testing') {
             steps {
-                echo 'Running Selenium tests against deployed application...'
+                echo 'Running integration tests against deployed application...'
                 script {
                     try {
-                        // Run Selenium tests in container with Chrome installed
+                        // Simple HTTP-based integration tests (no browser needed)
                         bat """
-                            docker run --rm -v "%cd%":/workspace -w /workspace --add-host host.docker.internal:host-gateway ${DOCKER_IMAGE}:${DOCKER_TAG} sh -c "APP_URL=http://host.docker.internal:${APP_PORT} python test_selenium.py"
+                            docker run --rm -v "%cd%":/workspace -w /workspace --add-host host.docker.internal:host-gateway ${PYTHON_IMAGE} sh -c "pip install requests && APP_URL=http://host.docker.internal:${APP_PORT} python test_selenium.py"
                         """
-                        echo '✓ Selenium tests completed successfully'
+                        echo '✓ Integration tests completed successfully'
                         
                     } catch (Exception e) {
-                        echo "❌ Selenium tests failed: ${e.getMessage()}"
+                        echo "❌ Integration tests failed: ${e.getMessage()}"
                         
                         // Get application logs for debugging
                         try {
