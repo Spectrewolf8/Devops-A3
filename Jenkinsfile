@@ -46,12 +46,39 @@ pipeline {
             }
         }
         
-               stage('Containerized Deployment') {
+        stage('Containerized Deployment') {
             steps {
                 echo 'Building and deploying application container...'
+                script {
+                    // Stop and remove any existing containers first
+                    try {
+                        bat """
+                            docker stop user-management-app-${BUILD_NUMBER} >nul 2>&1 || echo No container to stop
+                            docker rm user-management-app-${BUILD_NUMBER} >nul 2>&1 || echo No container to remove
+                        """
+                    } catch (Exception e) {
+                        echo "Container cleanup: ${e.getMessage()}"
+                    }
+                    
+                    // Also clean up containers from previous builds that might be using port 5000
+                    try {
+                        bat """
+                            for /f "tokens=*" %%i in ('docker ps -q --filter "publish=5000"') do docker stop %%i >nul 2>&1
+                            for /f "tokens=*" %%i in ('docker ps -aq --filter "name=user-management-app"') do docker rm %%i >nul 2>&1
+                        """
+                    } catch (Exception e) {
+                        echo "Port cleanup: ${e.getMessage()}"
+                    }
+                }
+                
                 bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                 bat "docker run -d --name user-management-app-${BUILD_NUMBER} -p ${APP_PORT}:5000 ${DOCKER_IMAGE}:${DOCKER_TAG}"
                 echo "✓ Container deployed on port ${APP_PORT}"
+                
+                // Wait a moment for container to start
+                script {
+                    sleep 5
+                }
             }
         }
         
