@@ -30,7 +30,7 @@ pipeline {
             steps {
                 echo 'Installing dependencies and validating build...'
                 bat """
-                    docker run --rm -v "%cd%":/workspace -w /workspace ${PYTHON_IMAGE} sh -c "pip install -r requirements.txt && python -c 'import app; print(\"Build validation successful\")'"
+                    docker run --rm -v "%cd%":/workspace -w /workspace ${PYTHON_IMAGE} sh -c "pip install -r requirements.txt && python -c \\"import app; print('Build validation successful')\\""
                 """
                 echo '✓ Dependencies installed and build validated'
             }
@@ -119,15 +119,6 @@ pipeline {
                     bat 'docker rm user-management-app 2>nul || echo No container to remove'
                 } catch (Exception e) {
                     echo "Cleanup warning: ${e.getMessage()}"
-                }
-                
-                // Clean up old images (keep last 3 builds)
-                try {
-                    bat """
-                        for /f "tokens=3" %%i in ('docker images ${DOCKER_IMAGE} --format "table {{.Tag}}" 2^>nul ^| findstr /R "[0-9]"') do if %%i LSS ${BUILD_NUMBER - 2} docker rmi ${DOCKER_IMAGE}:%%i 2>nul || echo Cleaned %%i
-                    """
-                } catch (Exception e) {
-                    echo "Image cleanup warning: ${e.getMessage()}"
                 }
             }
         }
