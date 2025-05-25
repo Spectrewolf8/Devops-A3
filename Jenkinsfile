@@ -46,40 +46,12 @@ pipeline {
             }
         }
         
-        stage('Containerized Deployment') {
+               stage('Containerized Deployment') {
             steps {
                 echo 'Building and deploying application container...'
-                script {
-                    try {
-                        // Build Docker image
-                        bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-                        bat "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest"
-                        echo "✓ Docker image built: ${DOCKER_IMAGE}:${DOCKER_TAG}"
-                        
-                        // Stop and remove existing container (Windows syntax)
-                        bat """
-                            docker stop user-management-app >nul 2>&1 || echo Container not running
-                            docker rm user-management-app >nul 2>&1 || echo No container to remove
-                        """
-                        
-                        // Run new container
-                        bat "docker run -d --name user-management-app -p ${APP_PORT}:5000 ${DOCKER_IMAGE}:${DOCKER_TAG}"
-                        echo "✓ Container deployed on port ${APP_PORT}"
-                        
-                        // Wait for container to be ready
-                        echo 'Waiting for application to start...'
-                        sleep 15
-                        
-                        // Health check
-                        bat "docker ps | findstr user-management-app"
-                        echo "✓ Container is running successfully"
-                        
-                    } catch (Exception e) {
-                        echo "❌ Deployment failed: ${e.getMessage()}"
-                        currentBuild.result = 'FAILURE'
-                        error("Container deployment failed")
-                    }
-                }
+                bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                bat "docker run -d --name user-management-app-${BUILD_NUMBER} -p ${APP_PORT}:5000 ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                echo "✓ Container deployed on port ${APP_PORT}"
             }
         }
         
